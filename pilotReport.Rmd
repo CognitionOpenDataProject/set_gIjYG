@@ -8,7 +8,6 @@ output:
 
 #### Article ID: gIjYG
 #### Pilot: Minyoung Lee
-#### Co-pilot: Tom Hardwicke  
 #### Start date: 03/24/2017
 #### End date: 03/28/2017
 
