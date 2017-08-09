@@ -1,0 +1,161 @@
+---
+title: "COD Reproducibility Report"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+#### Article ID: gIjYG
+#### Pilot: Minyoung Lee
+#### Co-pilot: Tom Hardwicke
+#### Start date: 03/24/2017
+#### End date: 
+
+-------
+
+#### Methods summary: 
+
+Participants searched for a target in complex scenes containing social or non-social distractors. The search time and whether or not the distractor was fixated first after scene onset (first look) were measured in each search trial. The search time and first look in social and non-social trials were compared over three blocks. Learning in visual search waas operationalized as decreasing search time over blocks.
+
+------
+
+#### Target outcomes: 
+
+> 3.1. Visual search
+
+> Manual and eye-tracking measures provided converging evidence for social stimuli being more distracting than non-social stimuli, with the effects interacting with learning over successive blocks (see Table 1 for descriptives).
+
+> 3.1.1. Manual search time (s)
+
+> A repeated-measures ANOVA with two within-subject factors (distractor: social, non-social; block: one, two, three), revealed a main effect of block, F(1.47, 52.89) = 395.23, p = < 0.001, η2 = 0.92, driven by decreasing search time across blocks. There was no main effect of distractor on search time, F(1, 36) = 0.38, p > 0.250, η2 = 0.01, but there was a significant distractor-by-block interaction, F(1.94, 69.98) = 3.78, p = 0.029, η2 = 0.10. Although Bonferroni-adjusted post hoc tests revealed no significant differences in search time between social and non-social scenes in each block separately (block one: p = 0.218, block two: p = 0.215, block three: p = 0.135), and highly significant differences between blocks for both social and non-social scenes separately (p < 0.001), there was a significant interaction between distractor and block in the linear contrasts, F(1, 36) = 5.13, p = 0.030, η2 = 0.13, suggesting a difference in slope across blocks between social and non-social scenes.
+
+------
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+## Step 1: Load packages
+
+```{r}
+library(tidyverse) # for data munging
+library(knitr) # for kable table formating
+library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
+library(readxl) # import excel files
+library(CODreports) # custom report functions
+library(ez) # for anova
+library(plotrix) # for function to calculate standard error
+```
+
+## Step 2: Load data
+
+```{r}
+d <- read.csv("data/data.csv")
+```
+
+## Step 3: Tidy data
+
+```{r}
+d.tidy <- d %>% select(Sbj,social,block,learn_ACC,learn_total_search,Total_first_look,AQ,SAS) %>%
+  rename(sbj = Sbj,
+         accurate = learn_ACC,
+         rt = learn_total_search,
+         first = Total_first_look,
+         distractor = social) %>%
+  mutate(distractor = recode_factor(distractor, "1" = "social", "0" = "nonsocial"),
+         sbj = factor(sbj),
+         block = factor(block))
+```
+
+## Step 4: Run analysis
+
+### Pre-processing
+
+N/A
+
+### Descriptive statistics
+
+We will first try to reproduce the descriptive statistics reported in Table 1:
+
+> Manual and eye-tracking measures provided converging evidence for social stimuli being more distracting than non-social stimuli, with the effects interacting with learning over successive blocks (see Table 1 for descriptives).
+
+![](table1.png)
+
+
+```{r}
+# accuracy
+tbl <- d.tidy %>% group_by(sbj, distractor, block) %>%
+  summarise(accuracy = mean(accurate)*100)  %>%
+  group_by(distractor, block) %>%
+  summarise(meanAccuracy = mean(accuracy, na.rm = T), se_accuracy = std.error(accuracy, na.rm = T))
+
+# RT and First look in accurate trials
+tbl2 <- d.tidy %>% group_by(sbj, distractor, block) %>%
+  filter(accurate==1) %>%
+  summarise(RT = mean(rt), First = sum(first,na.rm=TRUE)/sum(!is.nan(first))*100) %>%
+  group_by(distractor,block, add=FALSE) %>%
+  summarise(meanRT = mean(RT), se_RT = std.error(RT), meanFirst = mean(First), se_first = std.error(First))
+
+# join tables and make same format as Table 1
+table1 <- left_join(tbl2, tbl) %>% select(distractor, block, meanRT, se_RT, meanAccuracy, se_accuracy, meanFirst, se_first)
+kable(table1, digits = 2)
+```
+
+Visual comparison of our table 1 and the published table 1: all the means are accurately reproduced but all of the standard errors do no match.
+       
+Check discrepancies in standard errors with compare values function:
+
+```{r}
+# RT Standard Errors
+compareValues(0.11, 0.17)
+compareValues(0.06, 0.11)
+compareValues(0.06, 0.08)
+compareValues(0.11, 0.17)
+compareValues(0.07, 0.14)
+compareValues(0.07, 0.18)
+
+# Accuracy Standard Errors
+compareValues(0.45, 0.77)
+compareValues(0.34, 0.59)
+compareValues(0.32, 0.43)
+compareValues(0.64, 0.78)
+compareValues(0.33, 0.51)
+compareValues(0.34, 0.65)
+
+# First looks Standard Errors
+compareValues(1.81, 2.44)
+compareValues(1.39, 1.89)
+compareValues(1.12, 1.49)
+compareValues(1.27, 1.16)
+compareValues(1.23, 1.09)
+compareValues(1.17, 0.91)
+```
+
+### Inferential statistics
+
+We will now try to reproduce the following outcomes:
+
+> A repeated-measures ANOVA with two within-subject factors (distractor: social, non-social; block: one, two, three), revealed a main effect of block, F(1.47, 52.89) = 395.23, p = < 0.001, η2 = 0.92, driven by decreasing search time across blocks. There was no main effect of distractor on search time, F(1, 36) = 0.38, p > 0.250, η2 = 0.01, but there was a significant distractor-by-block interaction, F(1.94, 69.98) = 3.78, p = 0.029, η2 = 0.10. Although Bonferroni-adjusted post hoc tests revealed no significant differences in search time between social and non-social scenes in each block separately (block one: p = 0.218, block two: p = 0.215, block three: p = 0.135), and highly significant differences between blocks for both social and non-social scenes separately (p < 0.001), there was a significant interaction between distractor and block in the linear contrasts, F(1, 36) = 5.13, p = 0.030, η2 = 0.13, suggesting a difference in slope across blocks between social and non-social scenes.
+
+INSUFFICIENT INFORMATION ERROR - non-integer degrees of freedom suggests that a correction has been used, perhaps Greenhouse-Geisser?
+
+
+## Step 5: Conclusion
+
+```{r}
+codReport(Report_Type = 'joint',
+          Article_ID = 'gIjYG',
+          Insufficient_Information_Errors = 1,
+          Decision_Errors = 0,
+          Major_Numerical_Errors = 18,
+          Minor_Numerical_Errors = 2,
+          Author_Assistance = F)
+```
+
+We were able to reproduce the means from Table 1, but not the standard errors. It appears that a correction has been applied to the ANOVA because of the non-integer degrees of freedom, however, the correction is not identified.
+
+
+```{r session_info, include=TRUE, echo=TRUE, results='markup'}
+devtools::session_info()
+```
