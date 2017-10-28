@@ -429,12 +429,12 @@ compareValues(1.81, 2.44)</code></pre>
 <pre><code>## [1] &quot;MAJOR NUMERICAL ERROR. The reported value (1.17) and the obtained value (0.91) differed by 22.22%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
 <p>NOTE: we asked the authors for assistance and they sent us more details. They said they used the following function to calculate within-subject standard errors:</p>
 <pre class="r"><code># define functions
-## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
-##   data: a data frame.
-##   measurevar: the name of a column that contains the variable to be summariezed
-##   groupvars: a vector containing names of columns that contain grouping variables
-##   na.rm: a boolean that indicates whether to ignore NA's
-##   conf.interval: the percent range of the confidence interval (default is 95%)
+# Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
+#   data: a data frame.
+#   measurevar: the name of a column that contains the variable to be summariezed
+#   groupvars: a vector containing names of columns that contain grouping variables
+#   na.rm: a boolean that indicates whether to ignore NA's
+#   conf.interval: the percent range of the confidence interval (default is 95%)
 summarySE &lt;- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
                       conf.interval=.95, .drop=TRUE) {
     library(plyr)
@@ -471,14 +471,14 @@ summarySE &lt;- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
     return(datac)
 }
 
-## Norms the data within specified groups in a data frame; it normalizes each
-## subject (identified by idvar) so that they have the same mean, within each group
-## specified by betweenvars.
-##   data: a data frame.
-##   idvar: the name of a column that identifies each subject (or matched subjects)
-##   measurevar: the name of a column that contains the variable to be summariezed
-##   betweenvars: a vector containing names of columns that are between-subjects variables
-##   na.rm: a boolean that indicates whether to ignore NA's
+# Norms the data within specified groups in a data frame; it normalizes each
+# subject (identified by idvar) so that they have the same mean, within each group
+# specified by betweenvars.
+#   data: a data frame.
+#   idvar: the name of a column that identifies each subject (or matched subjects)
+#   measurevar: the name of a column that contains the variable to be summariezed
+#   betweenvars: a vector containing names of columns that are between-subjects variables
+#   na.rm: a boolean that indicates whether to ignore NA's
 normDataWithin &lt;- function(data=NULL, idvar, measurevar, betweenvars=NULL,
                            na.rm=FALSE, .drop=TRUE) {
     library(plyr)
@@ -506,18 +506,18 @@ normDataWithin &lt;- function(data=NULL, idvar, measurevar, betweenvars=NULL,
     return(data)
 }
 
-## Summarizes data, handling within-subjects variables by removing inter-subject variability.
-## It will still work if there are no within-S variables.
-## Gives count, un-normed mean, normed mean (with same between-group mean),
-##   standard deviation, standard error of the mean, and confidence interval.
-## If there are within-subject variables, calculate adjusted values using method from Morey (2008).
-##   data: a data frame.
-##   measurevar: the name of a column that contains the variable to be summariezed
-##   betweenvars: a vector containing names of columns that are between-subjects variables
-##   withinvars: a vector containing names of columns that are within-subjects variables
-##   idvar: the name of a column that identifies each subject (or matched subjects)
-##   na.rm: a boolean that indicates whether to ignore NA's
-##   conf.interval: the percent range of the confidence interval (default is 95%)
+# Summarizes data, handling within-subjects variables by removing inter-subject variability.
+# It will still work if there are no within-S variables.
+# Gives count, un-normed mean, normed mean (with same between-group mean),
+#   standard deviation, standard error of the mean, and confidence interval.
+# If there are within-subject variables, calculate adjusted values using method from Morey (2008).
+#   data: a data frame.
+#   measurevar: the name of a column that contains the variable to be summariezed
+#   betweenvars: a vector containing names of columns that are between-subjects variables
+#   withinvars: a vector containing names of columns that are within-subjects variables
+#   idvar: the name of a column that identifies each subject (or matched subjects)
+#   na.rm: a boolean that indicates whether to ignore NA's
+#   conf.interval: the percent range of the confidence interval (default is 95%)
 summarySEwithin &lt;- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
                             idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
 
@@ -566,28 +566,6 @@ summarySEwithin &lt;- function(data=NULL, measurevar, betweenvars=NULL, withinva
   merge(datac, ndatac)
 }</code></pre>
 <p>Apply the function:</p>
-</div>
-</div>
-<div id="data-a-data-frame." class="section level2">
-<h2>data: a data frame.</h2>
-</div>
-<div id="measurevar-the-name-of-a-column-that-contains-the-variable-to-be-summariezed" class="section level2">
-<h2>measurevar: the name of a column that contains the variable to be summariezed</h2>
-</div>
-<div id="betweenvars-a-vector-containing-names-of-columns-that-are-between-subjects-variables" class="section level2">
-<h2>betweenvars: a vector containing names of columns that are between-subjects variables</h2>
-</div>
-<div id="withinvars-a-vector-containing-names-of-columns-that-are-within-subjects-variables" class="section level2">
-<h2>withinvars: a vector containing names of columns that are within-subjects variables</h2>
-</div>
-<div id="idvar-the-name-of-a-column-that-identifies-each-subject-or-matched-subjects" class="section level2">
-<h2>idvar: the name of a column that identifies each subject (or matched subjects)</h2>
-</div>
-<div id="na.rm-a-boolean-that-indicates-whether-to-ignore-nas" class="section level2">
-<h2>na.rm: a boolean that indicates whether to ignore NA’s</h2>
-</div>
-<div id="conf.interval-the-percent-range-of-the-confidence-interval-default-is-95" class="section level2">
-<h2>conf.interval: the percent range of the confidence interval (default is 95%)</h2>
 <pre class="r"><code>d.tidy %&gt;% 
   group_by(sbj, distractor, block) %&gt;%
   dplyr::summarise(accuracy = mean(accurate)*100) %&gt;% # aggregate first
@@ -779,6 +757,7 @@ summarySEwithin &lt;- function(data=NULL, measurevar, betweenvars=NULL, withinva
 <pre class="r"><code>compareValues(reportedValue = 1.17, obtainedValue = 1.20)</code></pre>
 <pre><code>## [1] &quot;MINOR NUMERICAL ERROR. The reported value (1.17) and the obtained value (1.2) differed by 2.56%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
 <p>Only minor errors remain here.</p>
+</div>
 <div id="inferential-statistics" class="section level3">
 <h3>Inferential statistics</h3>
 <p>We will now try to reproduce the following outcomes:</p>

@@ -133,12 +133,12 @@ NOTE: we asked the authors for assistance and they sent us more details. They sa
 
 ```{r}
 # define functions
-## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
-##   data: a data frame.
-##   measurevar: the name of a column that contains the variable to be summariezed
-##   groupvars: a vector containing names of columns that contain grouping variables
-##   na.rm: a boolean that indicates whether to ignore NA's
-##   conf.interval: the percent range of the confidence interval (default is 95%)
+# Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
+#   data: a data frame.
+#   measurevar: the name of a column that contains the variable to be summariezed
+#   groupvars: a vector containing names of columns that contain grouping variables
+#   na.rm: a boolean that indicates whether to ignore NA's
+#   conf.interval: the percent range of the confidence interval (default is 95%)
 summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
                       conf.interval=.95, .drop=TRUE) {
     library(plyr)
@@ -175,14 +175,14 @@ summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
     return(datac)
 }
 
-## Norms the data within specified groups in a data frame; it normalizes each
-## subject (identified by idvar) so that they have the same mean, within each group
-## specified by betweenvars.
-##   data: a data frame.
-##   idvar: the name of a column that identifies each subject (or matched subjects)
-##   measurevar: the name of a column that contains the variable to be summariezed
-##   betweenvars: a vector containing names of columns that are between-subjects variables
-##   na.rm: a boolean that indicates whether to ignore NA's
+# Norms the data within specified groups in a data frame; it normalizes each
+# subject (identified by idvar) so that they have the same mean, within each group
+# specified by betweenvars.
+#   data: a data frame.
+#   idvar: the name of a column that identifies each subject (or matched subjects)
+#   measurevar: the name of a column that contains the variable to be summariezed
+#   betweenvars: a vector containing names of columns that are between-subjects variables
+#   na.rm: a boolean that indicates whether to ignore NA's
 normDataWithin <- function(data=NULL, idvar, measurevar, betweenvars=NULL,
                            na.rm=FALSE, .drop=TRUE) {
     library(plyr)
@@ -210,18 +210,18 @@ normDataWithin <- function(data=NULL, idvar, measurevar, betweenvars=NULL,
     return(data)
 }
 
-## Summarizes data, handling within-subjects variables by removing inter-subject variability.
-## It will still work if there are no within-S variables.
-## Gives count, un-normed mean, normed mean (with same between-group mean),
-##   standard deviation, standard error of the mean, and confidence interval.
-## If there are within-subject variables, calculate adjusted values using method from Morey (2008).
-##   data: a data frame.
-##   measurevar: the name of a column that contains the variable to be summariezed
-##   betweenvars: a vector containing names of columns that are between-subjects variables
-##   withinvars: a vector containing names of columns that are within-subjects variables
-##   idvar: the name of a column that identifies each subject (or matched subjects)
-##   na.rm: a boolean that indicates whether to ignore NA's
-##   conf.interval: the percent range of the confidence interval (default is 95%)
+# Summarizes data, handling within-subjects variables by removing inter-subject variability.
+# It will still work if there are no within-S variables.
+# Gives count, un-normed mean, normed mean (with same between-group mean),
+#   standard deviation, standard error of the mean, and confidence interval.
+# If there are within-subject variables, calculate adjusted values using method from Morey (2008).
+#   data: a data frame.
+#   measurevar: the name of a column that contains the variable to be summariezed
+#   betweenvars: a vector containing names of columns that are between-subjects variables
+#   withinvars: a vector containing names of columns that are within-subjects variables
+#   idvar: the name of a column that identifies each subject (or matched subjects)
+#   na.rm: a boolean that indicates whether to ignore NA's
+#   conf.interval: the percent range of the confidence interval (default is 95%)
 summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
                             idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
 
@@ -272,14 +272,6 @@ summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=
 ```
 
 Apply the function:
-
-##   data: a data frame.
-##   measurevar: the name of a column that contains the variable to be summariezed
-##   betweenvars: a vector containing names of columns that are between-subjects variables
-##   withinvars: a vector containing names of columns that are within-subjects variables
-##   idvar: the name of a column that identifies each subject (or matched subjects)
-##   na.rm: a boolean that indicates whether to ignore NA's
-##   conf.interval: the percent range of the confidence interval (default is 95%)
 
 ```{r}
 d.tidy %>% 
