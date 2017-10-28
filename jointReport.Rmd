@@ -129,7 +129,7 @@ compareValues(1.23, 1.09)
 compareValues(1.17, 0.91)
 ```
 
-NOTE: we asked the authors for assistance and they sent us more details. They send they used the following function to calculate within-subject standard errors:
+NOTE: we asked the authors for assistance and they sent us more details. They said they used the following function to calculate within-subject standard errors:
 
 ```{r}
 # define functions
