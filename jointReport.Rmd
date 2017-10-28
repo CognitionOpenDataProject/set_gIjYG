@@ -45,6 +45,7 @@ library(haven) # import and export 'SPSS', 'Stata' and 'SAS' Files
 library(readxl) # import excel files
 library(CODreports) # custom report functions
 library(ez) # for anova
+library(afex) # for anova (with author assistance)
 library(plotrix) # for function to calculate standard error
 ```
 
@@ -69,10 +70,6 @@ d.tidy <- d %>% select(Sbj,social,block,learn_ACC,learn_total_search,Total_first
 ```
 
 ## Step 4: Run analysis
-
-### Pre-processing
-
-N/A
 
 ### Descriptive statistics
 
@@ -132,6 +129,211 @@ compareValues(1.23, 1.09)
 compareValues(1.17, 0.91)
 ```
 
+NOTE: we asked the authors for assistance and they sent us more details. They send they used the following function to calculate within-subject standard errors:
+
+```{r}
+# define functions
+## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
+##   data: a data frame.
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   groupvars: a vector containing names of columns that contain grouping variables
+##   na.rm: a boolean that indicates whether to ignore NA's
+##   conf.interval: the percent range of the confidence interval (default is 95%)
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+    library(plyr)
+
+    # New version of length which can handle NA's: if na.rm==T, don't count them
+    length2 <- function (x, na.rm=FALSE) {
+        if (na.rm) sum(!is.na(x))
+        else       length(x)
+    }
+
+    # This does the summary. For each group's data frame, return a vector with
+    # N, mean, and sd
+    datac <- ddply(data, groupvars, .drop=.drop,
+      .fun = function(xx, col) {
+        c(N    = length2(xx[[col]], na.rm=na.rm),
+          mean = mean   (xx[[col]], na.rm=na.rm),
+          sd   = sd     (xx[[col]], na.rm=na.rm)
+        )
+      },
+      measurevar
+    )
+
+    # Rename the "mean" column    
+    datac <- rename(datac, c("mean" = measurevar))
+
+    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+
+    # Confidence interval multiplier for standard error
+    # Calculate t-statistic for confidence interval: 
+    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+    datac$ci <- datac$se * ciMult
+
+    return(datac)
+}
+
+## Norms the data within specified groups in a data frame; it normalizes each
+## subject (identified by idvar) so that they have the same mean, within each group
+## specified by betweenvars.
+##   data: a data frame.
+##   idvar: the name of a column that identifies each subject (or matched subjects)
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   betweenvars: a vector containing names of columns that are between-subjects variables
+##   na.rm: a boolean that indicates whether to ignore NA's
+normDataWithin <- function(data=NULL, idvar, measurevar, betweenvars=NULL,
+                           na.rm=FALSE, .drop=TRUE) {
+    library(plyr)
+
+    # Measure var on left, idvar + between vars on right of formula.
+    data.subjMean <- ddply(data, c(idvar, betweenvars), .drop=.drop,
+     .fun = function(xx, col, na.rm) {
+        c(subjMean = mean(xx[,col], na.rm=na.rm))
+      },
+      measurevar,
+      na.rm
+    )
+
+    # Put the subject means with original data
+    data <- merge(data, data.subjMean)
+
+    # Get the normalized data in a new column
+    measureNormedVar <- paste(measurevar, "_norm", sep="")
+    data[,measureNormedVar] <- data[,measurevar] - data[,"subjMean"] +
+                               mean(data[,measurevar], na.rm=na.rm)
+
+    # Remove this subject mean column
+    data$subjMean <- NULL
+
+    return(data)
+}
+
+## Summarizes data, handling within-subjects variables by removing inter-subject variability.
+## It will still work if there are no within-S variables.
+## Gives count, un-normed mean, normed mean (with same between-group mean),
+##   standard deviation, standard error of the mean, and confidence interval.
+## If there are within-subject variables, calculate adjusted values using method from Morey (2008).
+##   data: a data frame.
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   betweenvars: a vector containing names of columns that are between-subjects variables
+##   withinvars: a vector containing names of columns that are within-subjects variables
+##   idvar: the name of a column that identifies each subject (or matched subjects)
+##   na.rm: a boolean that indicates whether to ignore NA's
+##   conf.interval: the percent range of the confidence interval (default is 95%)
+summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
+                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
+
+  # Ensure that the betweenvars and withinvars are factors
+  factorvars <- vapply(data[, c(betweenvars, withinvars), drop=FALSE],
+    FUN=is.factor, FUN.VALUE=logical(1))
+
+  if (!all(factorvars)) {
+    nonfactorvars <- names(factorvars)[!factorvars]
+    message("Automatically converting the following non-factors to factors: ",
+            paste(nonfactorvars, collapse = ", "))
+    data[nonfactorvars] <- lapply(data[nonfactorvars], factor)
+  }
+
+  # Get the means from the un-normed data
+  datac <- summarySE(data, measurevar, groupvars=c(betweenvars, withinvars),
+                     na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+
+  # Drop all the unused columns (these will be calculated with normed data)
+  datac$sd <- NULL
+  datac$se <- NULL
+  datac$ci <- NULL
+
+  # Norm each subject's data
+  ndata <- normDataWithin(data, idvar, measurevar, betweenvars, na.rm, .drop=.drop)
+
+  # This is the name of the new column
+  measurevar_n <- paste(measurevar, "_norm", sep="")
+
+  # Collapse the normed data - now we can treat between and within vars the same
+  ndatac <- summarySE(ndata, measurevar_n, groupvars=c(betweenvars, withinvars),
+                      na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+
+  # Apply correction from Morey (2008) to the standard error and confidence interval
+  #  Get the product of the number of conditions of within-S variables
+  nWithinGroups    <- prod(vapply(ndatac[,withinvars, drop=FALSE], FUN=nlevels,
+                           FUN.VALUE=numeric(1)))
+  correctionFactor <- sqrt( nWithinGroups / (nWithinGroups-1) )
+
+  # Apply the correction factor
+  ndatac$sd <- ndatac$sd * correctionFactor
+  ndatac$se <- ndatac$se * correctionFactor
+  ndatac$ci <- ndatac$ci * correctionFactor
+
+  # Combine the un-normed means with the normed results
+  merge(datac, ndatac)
+}
+```
+
+Apply the function:
+
+##   data: a data frame.
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   betweenvars: a vector containing names of columns that are between-subjects variables
+##   withinvars: a vector containing names of columns that are within-subjects variables
+##   idvar: the name of a column that identifies each subject (or matched subjects)
+##   na.rm: a boolean that indicates whether to ignore NA's
+##   conf.interval: the percent range of the confidence interval (default is 95%)
+
+```{r}
+d.tidy %>% 
+  group_by(sbj, distractor, block) %>%
+  dplyr::summarise(accuracy = mean(accurate)*100) %>% # aggregate first
+  summarySEwithin(measurevar = 'accuracy', withinvars = c('distractor', 'block'), idvar = 'sbj', na.rm = T) %>%
+  select(distractor, block, mean = accuracy, se) %>%
+  kable(digits = 2)
+```
+
+![](table1.png)
+MATCH.
+
+Now check RT for accurate trials only:
+
+```{r}
+d.tidy %>% 
+  group_by(sbj, distractor, block) %>%
+  filter(accurate==1) %>%
+  dplyr::summarise(RT = mean(rt), First = sum(first,na.rm=TRUE)/sum(!is.nan(first))*100) %>% # first aggregate
+  summarySEwithin(measurevar = 'RT', withinvars = c('distractor', 'block'), idvar = 'sbj', na.rm = T) %>%
+  select(distractor, block, mean = RT, se) %>%
+  kable(digits = 2)
+```
+MATCH.
+
+Now check first look for accurate trials only:
+
+```{r}
+d.tidy %>% 
+  group_by(sbj, distractor, block) %>%
+  filter(accurate==1) %>%
+  dplyr::summarise(First = mean(first, na.rm = T)*100) %>% # first aggregate
+  summarySEwithin(measurevar = 'First', withinvars = c('distractor', 'block'), idvar = 'sbj', na.rm = T) %>%
+  select(distractor, block, mean = First, se) %>%
+  kable(digits = 2)
+```
+
+![](table1.png)
+
+Means MATCH. The standard errors for first looks are still slightly off, let's check the size of the discrepancies:
+
+```{r}
+compareValues(reportedValue = 1.81, obtainedValue = 1.86)
+compareValues(reportedValue = 1.39, obtainedValue = 1.43)
+compareValues(reportedValue = 1.12, obtainedValue = 1.15)
+
+compareValues(reportedValue = 1.27, obtainedValue = 1.30)
+compareValues(reportedValue = 1.23, obtainedValue = 1.26)
+compareValues(reportedValue = 1.17, obtainedValue = 1.20)
+```
+
+Only minor errors remain here.
+
 ### Inferential statistics
 
 We will now try to reproduce the following outcomes:
@@ -140,6 +342,21 @@ We will now try to reproduce the following outcomes:
 
 INSUFFICIENT INFORMATION ERROR - non-integer degrees of freedom suggests that a correction has been used, perhaps Greenhouse-Geisser?
 
+NOTE - the authors clarified that they did use a Greenhouse-Geisser correction and said they used the aov_ez function from the afex package.
+
+Run a 2x3 within-subjects ANOVA:
+
+```{r}
+forAOV <- d.tidy %>% 
+  group_by(sbj, distractor, block) %>%
+  filter(accurate==1) %>%
+  dplyr::summarise(RT = mean(rt, na.rm = T)*100)
+
+aov_out <- aov_ez(data = forAOV, id = "sbj", dv = "RT", within = c("distractor", "block"), correction = 'GG')
+
+kable(aov_out$anova_table)
+```
+ANOVA values are not quite matching up.
 
 ## Step 5: Conclusion
 
@@ -150,10 +367,12 @@ codReport(Report_Type = 'joint',
           Decision_Errors = 0,
           Major_Numerical_Errors = 18,
           Minor_Numerical_Errors = 2,
-          Author_Assistance = F)
+          Author_Assistance = T)
 ```
 
-We were able to reproduce the means from Table 1, but not the standard errors. It appears that a correction has been applied to the ANOVA because of the non-integer degrees of freedom, however, the correction is not identified.
+We were able to reproduce the means from Table 1. Initially, we could not reproduce the standard errors, however after the original authors informed us that they had used an R function to calculat within-subject standard errors, and we were able to reproduce the values successfully after implementing this function. 
+
+Initially, we did not attempt the ANOVA as it appeared that a correction has been applied and the correction was not identified. The authors told us that this was a Greenhouse-Geisser correction, and told us which R function they used... tbc
 
 
 ```{r session_info, include=TRUE, echo=TRUE, results='markup'}
