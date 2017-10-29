@@ -762,19 +762,20 @@ summarySEwithin &lt;- function(data=NULL, measurevar, betweenvars=NULL, withinva
 <h3>Inferential statistics</h3>
 <p>We will now try to reproduce the following outcomes:</p>
 <blockquote>
-<p>A repeated-measures ANOVA with two within-subject factors (distractor: social, non-social; block: one, two, three), revealed a main effect of block, F(1.47, 52.89) = 395.23, p = &lt; 0.001, η2 = 0.92, driven by decreasing search time across blocks. There was no main effect of distractor on search time, F(1, 36) = 0.38, p &gt; 0.250, η2 = 0.01, but there was a significant distractor-by-block interaction, F(1.94, 69.98) = 3.78, p = 0.029, η2 = 0.10. Although Bonferroni-adjusted post hoc tests revealed no significant differences in search time between social and non-social scenes in each block separately (block one: p = 0.218, block two: p = 0.215, block three: p = 0.135), and highly significant differences between blocks for both social and non-social scenes separately (p &lt; 0.001), there was a significant interaction between distractor and block in the linear contrasts, F(1, 36) = 5.13, p = 0.030, η2 = 0.13, suggesting a difference in slope across blocks between social and non-social scenes.</p>
+<p>A repeated-measures ANOVA with two within-subject factors (distractor: social, non-social; block: one, two, three), revealed a main effect of block, F(1.47, 52.89) = 395.23, p = &lt; 0.001, η2 = 0.92, driven by decreasing search time across blocks. There was no main effect of distractor on search time, F(1, 36) = 0.38, p &gt; 0.250, η2 = 0.01, but there was a significant distractor-by-block interaction, F(1.94, 69.98) = 3.78, p = 0.029, η2 = 0.10.</p>
 </blockquote>
 <p>INSUFFICIENT INFORMATION ERROR - non-integer degrees of freedom suggests that a correction has been used, perhaps Greenhouse-Geisser?</p>
-<p>NOTE - the authors clarified that they did use a Greenhouse-Geisser correction and said they used the aov_ez function from the afex package.</p>
+<p>NOTE - the authors clarified that they did use a Greenhouse-Geisser correction and said they used the ez.glm function (now known as the aov.ez function) from the afex package.</p>
 <p>Run a 2x3 within-subjects ANOVA:</p>
 <pre class="r"><code>forAOV &lt;- d.tidy %&gt;% 
   group_by(sbj, distractor, block) %&gt;%
   filter(accurate==1) %&gt;%
-  dplyr::summarise(RT = mean(rt, na.rm = T)*100)
+  dplyr::summarise(RT = log(mean(rt, na.rm = T)))
 
 aov_out &lt;- aov_ez(data = forAOV, id = &quot;sbj&quot;, dv = &quot;RT&quot;, within = c(&quot;distractor&quot;, &quot;block&quot;), correction = 'GG')
+pes &lt;- anova(aov_out, es = 'pes')$pes # calc partial eta squared
 
-kable(aov_out$anova_table)</code></pre>
+kable(aov_out$anova_table, digits = 2)</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -790,52 +791,130 @@ kable(aov_out$anova_table)</code></pre>
 <tbody>
 <tr class="odd">
 <td>distractor</td>
-<td align="right">1.000000</td>
-<td align="right">36.00000</td>
-<td align="right">2580.973</td>
-<td align="right">0.9223713</td>
-<td align="right">0.0017965</td>
-<td align="right">0.3432596</td>
+<td align="right">1.00</td>
+<td align="right">36.00</td>
+<td align="right">0.02</td>
+<td align="right">0.28</td>
+<td align="right">0.00</td>
+<td align="right">0.60</td>
 </tr>
 <tr class="even">
 <td>block</td>
-<td align="right">1.348370</td>
-<td align="right">48.54131</td>
-<td align="right">5541.475</td>
-<td align="right">284.7561483</td>
-<td align="right">0.6166422</td>
-<td align="right">0.0000000</td>
+<td align="right">1.47</td>
+<td align="right">52.80</td>
+<td align="right">0.03</td>
+<td align="right">394.35</td>
+<td align="right">0.64</td>
+<td align="right">0.00</td>
 </tr>
 <tr class="odd">
 <td>distractor:block</td>
-<td align="right">1.610926</td>
-<td align="right">57.99333</td>
-<td align="right">1477.424</td>
-<td align="right">2.3450220</td>
-<td align="right">0.0042017</td>
-<td align="right">0.1151819</td>
-</tr>
-<tr class="even">
-<td>ANOVA values are no</td>
-<td align="right">t quite mat</td>
-<td align="right">ching up.</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
+<td align="right">1.95</td>
+<td align="right">70.24</td>
+<td align="right">0.01</td>
+<td align="right">4.01</td>
+<td align="right">0.01</td>
+<td align="right">0.02</td>
 </tr>
 </tbody>
 </table>
+<pre class="r"><code># main effect of block, F(1.47, 52.89) = 395.23, p = &lt; 0.001, η2 = 0.92
+compareValues(reportedValue = 52.89, obtainedValue = aov_out$anova_table$`den Df`[2]) # df2</code></pre>
+<pre><code>## [1] &quot;MINOR NUMERICAL ERROR. The reported value (52.89) and the obtained value (52.8) differed by 0.17%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
+<pre class="r"><code>compareValues(reportedValue = 395.23, obtainedValue = aov_out$anova_table$`F`[2]) # F</code></pre>
+<pre><code>## [1] &quot;MINOR NUMERICAL ERROR. The reported value (395.23) and the obtained value (394.35) differed by 0.22%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
+<pre class="r"><code>compareValues(reportedValue = .92, obtainedValue = pes[2]) # pes</code></pre>
+<pre><code>## [1] &quot;MATCH. The reported value (0.92) and the obtained value (0.92) differed by 0%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
+<pre class="r"><code># p value is reported as &quot;p = &lt; 0.001&quot;. That is a match.
+
+# no main effect of distractor on search time, F(1, 36) = 0.38, p &gt; 0.250, η2 = 0.01
+compareValues(reportedValue = 0.38, obtainedValue = aov_out$anova_table$`F`[1]) # F</code></pre>
+<pre><code>## [1] &quot;MAJOR NUMERICAL ERROR. The reported value (0.38) and the obtained value (0.28) differed by 26.32%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
+<pre class="r"><code>compareValues(reportedValue = .01, obtainedValue = pes[1]) # pes</code></pre>
+<pre><code>## [1] &quot;MATCH. The reported value (0.01) and the obtained value (0.01) differed by 0%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
+<pre class="r"><code># p value is reported as &quot;p = &lt; 0.250&quot;. That is a match.
+
+# significant distractor-by-block interaction, F(1.94, 69.98) = 3.78, p = 0.029, η2 = 0.10
+compareValues(reportedValue = 1.95, obtainedValue = aov_out$anova_table$`num Df`[3]) # df1</code></pre>
+<pre><code>## [1] &quot;MATCH. The reported value (1.95) and the obtained value (1.95) differed by 0%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
+<pre class="r"><code>compareValues(reportedValue = 69.98, obtainedValue = aov_out$anova_table$`den Df`[3]) # df2</code></pre>
+<pre><code>## [1] &quot;MINOR NUMERICAL ERROR. The reported value (69.98) and the obtained value (70.24) differed by 0.37%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
+<pre class="r"><code>compareValues(reportedValue = 3.78, obtainedValue = aov_out$anova_table$`F`[3]) # F</code></pre>
+<pre><code>## [1] &quot;MINOR NUMERICAL ERROR. The reported value (3.78) and the obtained value (4.01) differed by 6.08%. NB obtained value was rounded to 2 decimal places.&quot;</code></pre>
+<pre class="r"><code>compareValues(reportedValue = .029, obtainedValue = aov_out$anova_table$`Pr(&gt;F)`[3], isP = T) # p</code></pre>
+<pre><code>## [1] &quot;MAJOR NUMERICAL ERROR. The reported value (0.029) and the obtained value (0.023) differed by 20.69%. NB obtained value was rounded to 3 decimal places.&quot;</code></pre>
+<pre class="r"><code>compareValues(reportedValue = .10, obtainedValue = pes[3]) # pes</code></pre>
+<pre><code>## [1] &quot;MATCH. The reported value (0.1) and the obtained value (0.1) differed by 0%. NB obtained value was rounded to 1 decimal places.&quot;</code></pre>
+<p>Due to two major numerical errors in the main anova, we will not proceed with the post-hoc tests.</p>
+<p>Note - the authors provided some code for running the ANOVA:</p>
+<pre class="r"><code>data &lt;-read_csv('data/data.csv')
+
+data2 &lt;- data[!is.nan(data$learn_total_search), ]
+
+data3 &lt;- data2[c(&quot;Sbj&quot;, &quot;social&quot;, &quot;block&quot;, &quot;learn_total_search&quot;)]
+data3 &lt;- aggregate(data3$learn_total_search, by = list(Sbj=data3$Sbj, social=data3$social, block=data3$block), mean)
+data3$x &lt;- log(data3$x)
+
+# below does not run - throws an error: Observed variable not in data: x
+#model &lt;- ez.glm(&quot;Sbj&quot;, &quot;x&quot;, data3, within=c(&quot;social&quot;, &quot;block&quot;),  factorize = FALSE, 
+                 #observed = c(&quot;x&quot;), args.return = c(&quot;pes&quot;))
+       
+# run the above but with the observed argument (whcih apparently is only needed for calculating generalised eta squared which is not relevant here)          
+model &lt;- ez.glm(&quot;Sbj&quot;, &quot;x&quot;, data3, within=c(&quot;social&quot;, &quot;block&quot;),  factorize = FALSE, args.return = c(&quot;pes&quot;))
+kable(model$anova_table, digits = 2)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">num Df</th>
+<th align="right">den Df</th>
+<th align="right">MSE</th>
+<th align="right">F</th>
+<th align="right">ges</th>
+<th align="right">Pr(&gt;F)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>social</td>
+<td align="right">1.00</td>
+<td align="right">36.00</td>
+<td align="right">0.02</td>
+<td align="right">0.28</td>
+<td align="right">0.00</td>
+<td align="right">0.60</td>
+</tr>
+<tr class="even">
+<td>block</td>
+<td align="right">1.47</td>
+<td align="right">52.80</td>
+<td align="right">0.03</td>
+<td align="right">394.35</td>
+<td align="right">0.64</td>
+<td align="right">0.00</td>
+</tr>
+<tr class="odd">
+<td>social:block</td>
+<td align="right">1.95</td>
+<td align="right">70.24</td>
+<td align="right">0.01</td>
+<td align="right">4.01</td>
+<td align="right">0.01</td>
+<td align="right">0.02</td>
+</tr>
+</tbody>
+</table>
+<p>This matches the output from the anova we calculated above.</p>
 </div>
 </div>
 <div id="step-5-conclusion" class="section level2">
 <h2>Step 5: Conclusion</h2>
 <pre class="r"><code>codReport(Report_Type = 'joint',
           Article_ID = 'gIjYG',
-          Insufficient_Information_Errors = 1,
+          Insufficient_Information_Errors = 0,
           Decision_Errors = 0,
-          Major_Numerical_Errors = 18,
-          Minor_Numerical_Errors = 2,
+          Major_Numerical_Errors = 2,
+          Minor_Numerical_Errors = 10,
           Author_Assistance = T)</code></pre>
 <table>
 <thead>
@@ -849,16 +928,16 @@ kable(aov_out$anova_table)</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="right">1</td>
 <td align="right">0</td>
-<td align="right">18</td>
+<td align="right">0</td>
 <td align="right">2</td>
+<td align="right">10</td>
 <td align="left">Failure despite author assistance</td>
 </tr>
 </tbody>
 </table>
 <p>We were able to reproduce the means from Table 1. Initially, we could not reproduce the standard errors, however after the original authors informed us that they had used an R function to calculat within-subject standard errors, and we were able to reproduce the values successfully after implementing this function.</p>
-<p>Initially, we did not attempt the ANOVA as it appeared that a correction has been applied and the correction was not identified. The authors told us that this was a Greenhouse-Geisser correction, and told us which R function they used… tbc</p>
+<p>Initially, we did not attempt the ANOVA as it appeared that a correction had been applied and the correction was not identified. The authors told us that this was a Greenhouse-Geisser correction, and informed us of the R function they used. When we tried to implement the ANOVA using this R function, we still encountered two major numerical errors.</p>
 <pre class="r"><code>devtools::session_info()</code></pre>
 <pre><code>##  setting  value                       
 ##  version  R version 3.3.2 (2016-10-31)
