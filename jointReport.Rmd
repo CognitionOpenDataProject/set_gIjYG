@@ -10,7 +10,7 @@ output:
 #### Pilot: Minyoung Lee
 #### Co-pilot: Tom Hardwicke
 #### Start date: 03/24/2017
-#### End date: 
+#### End date: 11/02/2017
 
 -------
 
@@ -28,7 +28,7 @@ Participants searched for a target in complex scenes containing social or non-so
 
 > 3.1.1. Manual search time (s)
 
-> A repeated-measures ANOVA with two within-subject factors (distractor: social, non-social; block: one, two, three), revealed a main effect of block, F(1.47, 52.89) = 395.23, p = < 0.001, η2 = 0.92, driven by decreasing search time across blocks. There was no main effect of distractor on search time, F(1, 36) = 0.38, p > 0.250, η2 = 0.01, but there was a significant distractor-by-block interaction, F(1.94, 69.98) = 3.78, p = 0.029, η2 = 0.10. Although Bonferroni-adjusted post hoc tests revealed no significant differences in search time between social and non-social scenes in each block separately (block one: p = 0.218, block two: p = 0.215, block three: p = 0.135), and highly significant differences between blocks for both social and non-social scenes separately (p < 0.001), there was a significant interaction between distractor and block in the linear contrasts, F(1, 36) = 5.13, p = 0.030, η2 = 0.13, suggesting a difference in slope across blocks between social and non-social scenes.
+> A repeated-measures ANOVA with two within-subject factors (distractor: social, non-social; block: one, two, three), revealed a main effect of block, F(1.47, 52.89) = 395.23, p = < 0.001, η2 = 0.92, driven by decreasing search time across blocks. There was no main effect of distractor on search time, F(1, 36) = 0.38, p > 0.250, η2 = 0.01, but there was a significant distractor-by-block interaction, F(1.94, 69.98) = 3.78, p = 0.029, η2 = 0.10.
 
 ------
 
@@ -101,32 +101,37 @@ kable(table1, digits = 2)
 
 Visual comparison of our table 1 and the published table 1: all the means are accurately reproduced but all of the standard errors do no match.
        
-Check discrepancies in standard errors with compare values function:
+NOTE: this was our first attempt before author assistance. 
 
 ```{r}
+# Check discrepancies in standard errors with compare values function:
+
 # RT Standard Errors
-compareValues(0.11, 0.17)
-compareValues(0.06, 0.11)
-compareValues(0.06, 0.08)
-compareValues(0.11, 0.17)
-compareValues(0.07, 0.14)
-compareValues(0.07, 0.18)
+# compareValues(0.11, 0.17)
+# compareValues(0.06, 0.11)
+# compareValues(0.06, 0.08)
+# compareValues(0.11, 0.17)
+# compareValues(0.07, 0.14)
+# compareValues(0.07, 0.18)
+# 
+# # Accuracy Standard Errors
+# compareValues(0.45, 0.77)
+# compareValues(0.34, 0.59)
+# compareValues(0.32, 0.43)
+# compareValues(0.64, 0.78)
+# compareValues(0.33, 0.51)
+# compareValues(0.34, 0.65)
+# 
+# # First looks Standard Errors
+# compareValues(1.81, 2.44)
+# compareValues(1.39, 1.89)
+# compareValues(1.12, 1.49)
+# compareValues(1.27, 1.16)
+# compareValues(1.23, 1.09)
+# compareValues(1.17, 0.91)
 
-# Accuracy Standard Errors
-compareValues(0.45, 0.77)
-compareValues(0.34, 0.59)
-compareValues(0.32, 0.43)
-compareValues(0.64, 0.78)
-compareValues(0.33, 0.51)
-compareValues(0.34, 0.65)
+# All are major numerical errors
 
-# First looks Standard Errors
-compareValues(1.81, 2.44)
-compareValues(1.39, 1.89)
-compareValues(1.12, 1.49)
-compareValues(1.27, 1.16)
-compareValues(1.23, 1.09)
-compareValues(1.17, 0.91)
 ```
 
 NOTE: we asked the authors for assistance and they sent us more details. They said they used the following function to calculate within-subject standard errors:
@@ -336,19 +341,63 @@ INSUFFICIENT INFORMATION ERROR - non-integer degrees of freedom suggests that a 
 
 NOTE - the authors clarified that they did use a Greenhouse-Geisser correction and said they used the ez.glm function (now known as the aov.ez function) from the afex package.
 
-Run a 2x3 within-subjects ANOVA:
+This was our first attempt to run a 2x3 within-subjects ANOVA:
 
 ```{r}
-forAOV <- d.tidy %>% 
-  group_by(sbj, distractor, block) %>%
-  filter(accurate==1) %>%
-  dplyr::summarise(RT = log(mean(rt, na.rm = T)))
+# forAOV <- d.tidy %>% 
+#   group_by(sbj, distractor, block) %>%
+#   filter(accurate==1) %>%
+#   dplyr::summarise(RT = log(mean(rt, na.rm = T)))
+# 
+# aov_out <- aov_ez(data = forAOV, id = "sbj", dv = "RT", within = c("distractor", "block"), correction = 'GG')
+# pes <- anova(aov_out, es = 'pes')$pes # calc partial eta squared
+# 
+# kable(aov_out$anova_table, digits = 2)
+# 
+# # main effect of block, F(1.47, 52.89) = 395.23, p = < 0.001, η2 = 0.92
+# compareValues(reportedValue = 52.89, obtainedValue = aov_out$anova_table$`den Df`[2]) # df2 ## minor numerical error
+# compareValues(reportedValue = 395.23, obtainedValue = aov_out$anova_table$`F`[2]) # F ## minor numerical error
+# compareValues(reportedValue = .92, obtainedValue = pes[2]) # pes
+# # p value is reported as "p = < 0.001". That is a match.
+# 
+# # no main effect of distractor on search time, F(1, 36) = 0.38, p > 0.250, η2 = 0.01
+# compareValues(reportedValue = 0.38, obtainedValue = aov_out$anova_table$`F`[1]) # F ## major numerical error
+# compareValues(reportedValue = .01, obtainedValue = pes[1]) # pes
+# # p value is reported as "p = < 0.250". That is a match.
+# 
+# # significant distractor-by-block interaction, F(1.94, 69.98) = 3.78, p = 0.029, η2 = 0.10
+# compareValues(reportedValue = 1.95, obtainedValue = aov_out$anova_table$`num Df`[3]) # df1
+# compareValues(reportedValue = 69.98, obtainedValue = aov_out$anova_table$`den Df`[3]) # df2 ## minor numerical error
+# compareValues(reportedValue = 3.78, obtainedValue = aov_out$anova_table$`F`[3]) # F ## minor numerical error
+# compareValues(reportedValue = .029, obtainedValue = aov_out$anova_table$`Pr(>F)`[3], isP = T) # p ## major numerical error
+# compareValues(reportedValue = .10, obtainedValue = pes[3]) # pes
+```
 
-aov_out <- aov_ez(data = forAOV, id = "sbj", dv = "RT", within = c("distractor", "block"), correction = 'GG')
+We encountered a number of errors (2 major) when we first ran this. The authors informed us that some of the data was actually excluded and this was not reported in the paper. They also provided some code to implement the exclusion and run the ANOVA (note we had to make some minor edits to get it to work):
+
+```{r}
+data <-read_csv('authorAssistance/Raw_data2.csv') # NB - TH edit, changed data.csv to read_csv
+
+data2 <- data[(!is.nan(data$learn_total_search) & data$recognize ==0), ]
+
+data3 <- data2[c("Sbj", "social", "block", "learn_total_search")]
+data3 <- aggregate(data3$learn_total_search, by = list(Sbj=data3$Sbj, social=data3$social, block=data3$block), mean)
+dataSUM <- summarySEwithin(data3, measurevar="x", withinvars=c("social","block"), idvar="Sbj", na.rm=FALSE, conf.interval=.95)
+data3$x <- log(data3$x)
+
+
+# model <- ez.glm("Sbj", "x", data3, within=c("social", "block"), factorize = FALSE, observed = c("x"), args.return = c("pes"))
+
+aov_out <- aov_ez(data = data3, id = "Sbj", dv = "x", within = c("social", "block"), correction = 'GG') # NB - TH edit, updated to new aov function
+
 pes <- anova(aov_out, es = 'pes')$pes # calc partial eta squared
 
 kable(aov_out$anova_table, digits = 2)
+```
 
+Let's check these values:
+
+```{r}
 # main effect of block, F(1.47, 52.89) = 395.23, p = < 0.001, η2 = 0.92
 compareValues(reportedValue = 52.89, obtainedValue = aov_out$anova_table$`den Df`[2]) # df2
 compareValues(reportedValue = 395.23, obtainedValue = aov_out$anova_table$`F`[2]) # F
@@ -368,29 +417,7 @@ compareValues(reportedValue = .029, obtainedValue = aov_out$anova_table$`Pr(>F)`
 compareValues(reportedValue = .10, obtainedValue = pes[3]) # pes
 ```
 
-Due to two major numerical errors in the main anova, we will not proceed with the post-hoc tests.
-
-
-Note - the authors provided some code for running the ANOVA:
-```{r}
-data <-read_csv('data/data.csv')
-
-data2 <- data[!is.nan(data$learn_total_search), ]
-
-data3 <- data2[c("Sbj", "social", "block", "learn_total_search")]
-data3 <- aggregate(data3$learn_total_search, by = list(Sbj=data3$Sbj, social=data3$social, block=data3$block), mean)
-data3$x <- log(data3$x)
-
-# below does not run - throws an error: Observed variable not in data: x
-#model <- ez.glm("Sbj", "x", data3, within=c("social", "block"),  factorize = FALSE, 
-                 #observed = c("x"), args.return = c("pes"))
-       
-# run the above but with the observed argument (whcih apparently is only needed for calculating generalised eta squared which is not relevant here)          
-model <- ez.glm("Sbj", "x", data3, within=c("social", "block"),  factorize = FALSE, args.return = c("pes"))
-kable(model$anova_table, digits = 2)
-```
-
-This matches the output from the anova we calculated above.
+Everything matches now (apart from one minor numerical).
 
 ## Step 5: Conclusion
 
@@ -399,14 +426,14 @@ codReport(Report_Type = 'joint',
           Article_ID = 'gIjYG',
           Insufficient_Information_Errors = 0,
           Decision_Errors = 0,
-          Major_Numerical_Errors = 2,
-          Minor_Numerical_Errors = 10,
+          Major_Numerical_Errors = 0,
+          Minor_Numerical_Errors = 7,
           Author_Assistance = T)
 ```
 
-We were able to reproduce the means from Table 1. Initially, we could not reproduce the standard errors, however after the original authors informed us that they had used an R function to calculat within-subject standard errors, and we were able to reproduce the values successfully after implementing this function. 
+We were able to reproduce the means from Table 1. Initially, we could not reproduce the standard errors, however after the original authors informed us that they had used an R function to calculate within-subject standard errors, and we were able to reproduce the values successfully after implementing this function. 
 
-Initially, we did not attempt the ANOVA as it appeared that a correction had been applied and the correction was not identified. The authors told us that this was a Greenhouse-Geisser correction, and informed us of the R function they used. When we tried to implement the ANOVA using this R function, we still encountered two major numerical errors.
+Initially, we did not attempt the ANOVA as it appeared that a correction had been applied and the correction was not identified. The authors told us that this was a Greenhouse-Geisser correction, and informed us of the R function they used. When we tried to implement the ANOVA using this R function, we still encountered two major numerical errors. The authors then informed us that some of the data had actually been excluded prior to running the main analysis - this was not reported in the paper. The authors also provided code to implement this exclusion and run the ANVOA. With some minor edits, we got this to work and were able to reproduce the target outcomes.
 
 
 ```{r session_info, include=TRUE, echo=TRUE, results='markup'}
