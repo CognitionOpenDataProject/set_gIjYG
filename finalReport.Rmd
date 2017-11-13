@@ -9,8 +9,10 @@ output:
 #### Article ID: gIjYG
 #### Pilot: Minyoung Lee
 #### Co-pilot: Tom Hardwicke
-#### Start date: 03/24/2017
-#### End date: 11/02/2017
+#### Start date: Mar 24 2017
+#### End date: Nov 2 2017
+#### Final verification: Tom Hardwicke
+#### Date: Nov 9 2017
 
 -------
 
@@ -34,6 +36,9 @@ Participants searched for a target in complex scenes containing social or non-so
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE)
+
+# prepare an empty report object, we will update this each time we run compareValues2()
+reportObject <- data.frame("Article_ID" = NA, "valuesChecked" = 0, "eyeballs" = 0, "Total_df" = 0, "Total_p" = 0, "Total_mean" = 0, "Total_sd" = 0, "Total_se" = 0, "Total_ci" = 0, "Total_bf" = 0, "Total_t" = 0, "Total_F" = 0, "Total_es" = 0, "Total_median" = 0, "Total_irr" = 0, "Total_r" = 0, "Total_z" = 0, "Total_coeff" = 0, "Total_n" = 0, "Total_x2" = 0, "Total_other" = 0, "Insufficient_Information_Errors" = 0, "Decision_Errors" = 0, "Major_Numerical_Errors" = 0, "Minor_Numerical_Errors" = 0, "Major_df" = 0, "Major_p" = 0, "Major_mean" = 0, "Major_sd" = 0, "Major_se" = 0, "Major_ci" = 0, "Major_bf" = 0, "Major_t" = 0, "Major_F" = 0, "Major_es" = 0, "Major_median" = 0, "Major_irr" = 0, "Major_r" = 0, "Major_z" = 0, "Major_coeff" = 0, "Major_n" = 0, "Major_x2" = 0, "Major_other" = 0, "affectsConclusion" = NA, "error_typo" = 0, "error_specification" = 0, "error_analysis" = 0, "error_data" = 0, "error_unidentified" = 0, "Author_Assistance" = NA, "resolved_typo" = 0, "resolved_specification" = 0, "resolved_analysis" = 0, "resolved_data" = 0, "correctionSuggested" = NA, "correctionPublished" = NA)
 ```
 
 ## Step 1: Load packages
@@ -77,7 +82,7 @@ We will first try to reproduce the descriptive statistics reported in Table 1:
 
 > Manual and eye-tracking measures provided converging evidence for social stimuli being more distracting than non-social stimuli, with the effects interacting with learning over successive blocks (see Table 1 for descriptives).
 
-![](table1.png)
+![](images/table1.png)
 
 
 ```{r}
@@ -100,7 +105,58 @@ kable(table1, digits = 2)
 ```
 
 Visual comparison of our table 1 and the published table 1: all the means are accurately reproduced but all of the standard errors do no match.
-       
+
+Explictly check the means:
+
+```{r}
+# rt means
+soc_rt_m_1 <- table1 %>% filter(distractor == 'social', block == 1) %>% pull(meanRT)
+soc_rt_m_2 <- table1 %>% filter(distractor == 'social', block == 2) %>% pull(meanRT)
+soc_rt_m_3 <- table1 %>% filter(distractor == 'social', block == 3) %>% pull(meanRT)
+nsoc_rt_m_1 <- table1 %>% filter(distractor == 'nonsocial', block == 1) %>% pull(meanRT)
+nsoc_rt_m_2 <- table1 %>% filter(distractor == 'nonsocial', block == 2) %>% pull(meanRT)
+nsoc_rt_m_3 <- table1 %>% filter(distractor == 'nonsocial', block == 3) %>% pull(meanRT)
+
+reportobject <- compareValues2(reportedValue = "4.85", obtainedValue = soc_rt_m_1, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "3.32", obtainedValue = soc_rt_m_2, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "2.60", obtainedValue = soc_rt_m_3, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "5.00", obtainedValue = nsoc_rt_m_1, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "3.45", obtainedValue = nsoc_rt_m_2, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "2.53", obtainedValue = nsoc_rt_m_3, valueType = 'mean')
+
+# accuracy means
+soc_acc_m_1 <- table1 %>% filter(distractor == 'social', block == 1) %>% pull(meanAccuracy)
+soc_acc_m_2 <- table1 %>% filter(distractor == 'social', block == 2) %>% pull(meanAccuracy)
+soc_acc_m_3 <- table1 %>% filter(distractor == 'social', block == 3) %>% pull(meanAccuracy)
+nsoc_acc_m_1 <- table1 %>% filter(distractor == 'nonsocial', block == 1) %>% pull(meanAccuracy)
+nsoc_acc_m_2 <- table1 %>% filter(distractor == 'nonsocial', block == 2) %>% pull(meanAccuracy)
+nsoc_acc_m_3 <- table1 %>% filter(distractor == 'nonsocial', block == 3) %>% pull(meanAccuracy)
+
+reportobject <- compareValues2(reportedValue = "97.09", obtainedValue = soc_acc_m_1, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "97.97", obtainedValue = soc_acc_m_2, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "98.31", obtainedValue = soc_acc_m_3, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "95.95", obtainedValue = nsoc_acc_m_1, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "98.04", obtainedValue = nsoc_acc_m_2, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "98.12", obtainedValue = nsoc_acc_m_3, valueType = 'mean')
+
+# first look means
+soc_look_m_1 <- table1 %>% filter(distractor == 'social', block == 1) %>% pull(meanFirst)
+soc_look_m_2 <- table1 %>% filter(distractor == 'social', block == 2) %>% pull(meanFirst)
+soc_look_m_3 <- table1 %>% filter(distractor == 'social', block == 3) %>% pull(meanFirst)
+nsoc_look_m_1 <- table1 %>% filter(distractor == 'nonsocial', block == 1) %>% pull(meanFirst)
+nsoc_look_m_2 <- table1 %>% filter(distractor == 'nonsocial', block == 2) %>% pull(meanFirst)
+nsoc_look_m_3 <- table1 %>% filter(distractor == 'nonsocial', block == 3) %>% pull(meanFirst)
+
+reportobject <- compareValues2(reportedValue = "26.49", obtainedValue = soc_look_m_1, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "21.51", obtainedValue = soc_look_m_2, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "18.60", obtainedValue = soc_look_m_3, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "16.97", obtainedValue = nsoc_look_m_1, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "15.52", obtainedValue = nsoc_look_m_2, valueType = 'mean')
+reportobject <- compareValues2(reportedValue = "14.11", obtainedValue = nsoc_look_m_3, valueType = 'mean')
+```
+
+Now explictly check the SEs...
+
 NOTE: this was our first attempt before author assistance. 
 
 ```{r}
@@ -276,58 +332,95 @@ summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=
 }
 ```
 
-Apply the function:
+Apply the function
+
+Accuracy ses:
 
 ```{r}
-d.tidy %>% 
+acc_se <- d.tidy %>% 
   group_by(sbj, distractor, block) %>%
   dplyr::summarise(accuracy = mean(accurate)*100) %>% # aggregate first
   summarySEwithin(measurevar = 'accuracy', withinvars = c('distractor', 'block'), idvar = 'sbj', na.rm = T) %>%
-  select(distractor, block, mean = accuracy, se) %>%
-  kable(digits = 2)
+  select(distractor, block, mean = accuracy, se)
 ```
 
-![](table1.png)
-MATCH.
-
-Now check RT for accurate trials only:
+Now get RT ses for accurate trials only:
 
 ```{r}
-d.tidy %>% 
+rt_se <- d.tidy %>% 
   group_by(sbj, distractor, block) %>%
   filter(accurate==1) %>%
   dplyr::summarise(RT = mean(rt), First = sum(first,na.rm=TRUE)/sum(!is.nan(first))*100) %>% # first aggregate
   summarySEwithin(measurevar = 'RT', withinvars = c('distractor', 'block'), idvar = 'sbj', na.rm = T) %>%
-  select(distractor, block, mean = RT, se) %>%
-  kable(digits = 2)
+  select(distractor, block, mean = RT, se)
 ```
-MATCH.
 
-Now check first look for accurate trials only:
+Now get first look ses for accurate trials only:
 
 ```{r}
-d.tidy %>% 
+look_se <- d.tidy %>% 
   group_by(sbj, distractor, block) %>%
   filter(accurate==1) %>%
   dplyr::summarise(First = mean(first, na.rm = T)*100) %>% # first aggregate
   summarySEwithin(measurevar = 'First', withinvars = c('distractor', 'block'), idvar = 'sbj', na.rm = T) %>%
-  select(distractor, block, mean = First, se) %>%
-  kable(digits = 2)
+  select(distractor, block, mean = First, se)
 ```
 
-![](table1.png)
-
-Means MATCH. The standard errors for first looks are still slightly off, let's check the size of the discrepancies:
+Explictly check the SEs:
 
 ```{r}
-compareValues(reportedValue = 1.81, obtainedValue = 1.86)
-compareValues(reportedValue = 1.39, obtainedValue = 1.43)
-compareValues(reportedValue = 1.12, obtainedValue = 1.15)
+# rt SEs
+soc_rt_se_1 <- rt_se %>% filter(distractor == 'social', block == 1) %>% pull(se)
+soc_rt_se_2 <- rt_se %>% filter(distractor == 'social', block == 2) %>% pull(se)
+soc_rt_se_3 <- rt_se %>% filter(distractor == 'social', block == 3) %>% pull(se)
+nsoc_rt_se_1 <- rt_se %>% filter(distractor == 'nonsocial', block == 1) %>% pull(se)
+nsoc_rt_se_2 <- rt_se %>% filter(distractor == 'nonsocial', block == 2) %>% pull(se)
+nsoc_rt_se_3 <- rt_se %>% filter(distractor == 'nonsocial', block == 3) %>% pull(se)
 
-compareValues(reportedValue = 1.27, obtainedValue = 1.30)
-compareValues(reportedValue = 1.23, obtainedValue = 1.26)
-compareValues(reportedValue = 1.17, obtainedValue = 1.20)
+reportobject <- compareValues2(reportedValue = "0.11", obtainedValue = soc_rt_se_1, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "0.06", obtainedValue = soc_rt_se_2, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "0.06", obtainedValue = soc_rt_se_3, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "0.11", obtainedValue = nsoc_rt_se_1, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "0.07", obtainedValue = nsoc_rt_se_2, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "0.07", obtainedValue = nsoc_rt_se_3, valueType = 'se')
 ```
+
+```{r}
+# accuracy SEs
+soc_acc_se_1 <- acc_se %>% filter(distractor == 'social', block == 1) %>% pull(se)
+soc_acc_se_2 <- acc_se %>% filter(distractor == 'social', block == 2) %>% pull(se)
+soc_acc_se_3 <- acc_se %>% filter(distractor == 'social', block == 3) %>% pull(se)
+nsoc_acc_se_1 <- acc_se %>% filter(distractor == 'nonsocial', block == 1) %>% pull(se)
+nsoc_acc_se_2 <- acc_se %>% filter(distractor == 'nonsocial', block == 2) %>% pull(se)
+nsoc_acc_se_3 <- acc_se %>% filter(distractor == 'nonsocial', block == 3) %>% pull(se)
+
+reportobject <- compareValues2(reportedValue = "0.45", obtainedValue = soc_acc_se_1, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "0.34", obtainedValue = soc_acc_se_2, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "0.32", obtainedValue = soc_acc_se_3, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "0.64", obtainedValue = nsoc_acc_se_1, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "0.33", obtainedValue = nsoc_acc_se_2, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "0.34", obtainedValue = nsoc_acc_se_3, valueType = 'se')
+```
+
+![](images/table1.png)
+
+```{r}
+# first look SEs
+soc_look_se_1 <- look_se %>% filter(distractor == 'social', block == 1) %>% pull(se)
+soc_look_se_2 <- look_se %>% filter(distractor == 'social', block == 2) %>% pull(se)
+soc_look_se_3 <- look_se %>% filter(distractor == 'social', block == 3) %>% pull(se)
+nsoc_look_se_1 <- look_se %>% filter(distractor == 'nonsocial', block == 1) %>% pull(se)
+nsoc_look_se_2 <- look_se %>% filter(distractor == 'nonsocial', block == 2) %>% pull(se)
+nsoc_look_se_3 <- look_se %>% filter(distractor == 'nonsocial', block == 3) %>% pull(se)
+
+reportobject <- compareValues2(reportedValue = "1.81", obtainedValue = soc_look_se_1, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "1.39", obtainedValue = soc_look_se_2, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "1.12", obtainedValue = soc_look_se_3, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "1.27", obtainedValue = nsoc_look_se_1, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "1.23", obtainedValue = nsoc_look_se_2, valueType = 'se')
+reportobject <- compareValues2(reportedValue = "1.17", obtainedValue = nsoc_look_se_3, valueType = 'se')
+```
+
 
 Only minor errors remain here.
 
@@ -337,11 +430,9 @@ We will now try to reproduce the following outcomes:
 
 > A repeated-measures ANOVA with two within-subject factors (distractor: social, non-social; block: one, two, three), revealed a main effect of block, F(1.47, 52.89) = 395.23, p = < 0.001, η2 = 0.92, driven by decreasing search time across blocks. There was no main effect of distractor on search time, F(1, 36) = 0.38, p > 0.250, η2 = 0.01, but there was a significant distractor-by-block interaction, F(1.94, 69.98) = 3.78, p = 0.029, η2 = 0.10.
 
-INSUFFICIENT INFORMATION ERROR - non-integer degrees of freedom suggests that a correction has been used, perhaps Greenhouse-Geisser?
+NOTE - we initially encounter an insufficient information error here as the non-integer degrees of freedom suggests that a correction had been used but was not specified. The authors clarified that they did use a Greenhouse-Geisser correction and also added that they used the ez.glm function (now known as the aov.ez function) from the afex package.
 
-NOTE - the authors clarified that they did use a Greenhouse-Geisser correction and said they used the ez.glm function (now known as the aov.ez function) from the afex package.
-
-This was our first attempt to run a 2x3 within-subjects ANOVA:
+This was our first attempt to run a 2x3 within-subjects ANOVA with a greenhouse-geisser correction according to the authors instructions:
 
 ```{r}
 # forAOV <- d.tidy %>% 
@@ -373,7 +464,7 @@ This was our first attempt to run a 2x3 within-subjects ANOVA:
 # compareValues(reportedValue = .10, obtainedValue = pes[3]) # pes
 ```
 
-We encountered a number of errors (2 major) when we first ran this. The authors informed us that some of the data was actually excluded and this was not reported in the paper. They also provided some code to implement the exclusion and run the ANOVA (note we had to make some minor edits to get it to work):
+We encountered a number of errors (2 major) when we first ran this. The authors then informed us that some of the data was actually excluded and that this was not reported in the paper. They also provided some code to implement these exclusions and run the ANOVA (note we had to make some minor edits to get it to work):
 
 ```{r}
 data <-read_csv('authorAssistance/Raw_data2.csv') # NB - TH edit, changed data.csv to read_csv
@@ -399,42 +490,86 @@ Let's check these values:
 
 ```{r}
 # main effect of block, F(1.47, 52.89) = 395.23, p = < 0.001, η2 = 0.92
-compareValues(reportedValue = 52.89, obtainedValue = aov_out$anova_table$`den Df`[2]) # df2
-compareValues(reportedValue = 395.23, obtainedValue = aov_out$anova_table$`F`[2]) # F
-compareValues(reportedValue = .92, obtainedValue = pes[2]) # pes
-# p value is reported as "p = < 0.001". That is a match.
+reportObject <- compareValues2(reportedValue = "1.47", obtainedValue = aov_out$anova_table$`num Df`[2], valueType = 'df') # df1
+reportObject <- compareValues2(reportedValue = "52.89", obtainedValue = aov_out$anova_table$`den Df`[2], valueType = 'df') # df2
+reportObject <- compareValues2(reportedValue = "395.23", obtainedValue = aov_out$anova_table$`F`[2], valueType = 'F') # F
+reportObject <- compareValues2(reportedValue = "eyeballMATCH", obtainedValue = aov_out$anova_table$`Pr(>F)`[2], valueType = 'p') # p value is reported as "p = < 0.001". That is a match.
+reportObject <- compareValues2(reportedValue = ".92", obtainedValue = pes[2], valueType = 'es') # pes
 
 # no main effect of distractor on search time, F(1, 36) = 0.38, p > 0.250, η2 = 0.01
-compareValues(reportedValue = 0.38, obtainedValue = aov_out$anova_table$`F`[1]) # F
-compareValues(reportedValue = .01, obtainedValue = pes[1]) # pes
-# p value is reported as "p = < 0.250". That is a match.
+reportObject <- compareValues2(reportedValue = "1", obtainedValue = aov_out$anova_table$`num Df`[1], valueType = 'df') # df1
+reportObject <- compareValues2(reportedValue = "36", obtainedValue = aov_out$anova_table$`den Df`[1], valueType = 'df') # df2
+reportObject <- compareValues2(reportedValue = "0.38", obtainedValue = aov_out$anova_table$`F`[1], valueType = 'F') # F
+reportObject <- compareValues2(reportedValue = "eyeballMATCH", obtainedValue = aov_out$anova_table$`Pr(>F)`[1], valueType = 'p') # p value is reported as "p = < 0.250". That is a match. 
+reportObject <- compareValues2(reportedValue = "0.01", obtainedValue = pes[1], valueType = 'es') # pes
+
 
 # significant distractor-by-block interaction, F(1.94, 69.98) = 3.78, p = 0.029, η2 = 0.10
-compareValues(reportedValue = 1.95, obtainedValue = aov_out$anova_table$`num Df`[3]) # df1
-compareValues(reportedValue = 69.98, obtainedValue = aov_out$anova_table$`den Df`[3]) # df2
-compareValues(reportedValue = 3.78, obtainedValue = aov_out$anova_table$`F`[3]) # F
-compareValues(reportedValue = .029, obtainedValue = aov_out$anova_table$`Pr(>F)`[3], isP = T) # p
-compareValues(reportedValue = .10, obtainedValue = pes[3]) # pes
+reportObject <- compareValues2(reportedValue = "1.94", obtainedValue = aov_out$anova_table$`num Df`[3], valueType = 'df') # df1
+reportObject <- compareValues2(reportedValue = "69.98", obtainedValue = aov_out$anova_table$`den Df`[3], valueType = 'df') # df2
+reportObject <- compareValues2(reportedValue = "3.78", obtainedValue = aov_out$anova_table$`F`[3], valueType = 'F') # F
+reportObject <- compareValues2(reportedValue = "0.029", obtainedValue = aov_out$anova_table$`Pr(>F)`[3], valueType = 'p') # p
+reportObject <- compareValues2(reportedValue = "0.10", obtainedValue = pes[3], valueType = 'es') # pes
 ```
 
-Everything matches now (apart from one minor numerical).
+Everything matches now (apart from one minor numerical error).
 
 ## Step 5: Conclusion
 
-```{r}
-codReport(Report_Type = 'joint',
-          Article_ID = 'gIjYG',
-          Insufficient_Information_Errors = 0,
-          Decision_Errors = 0,
-          Major_Numerical_Errors = 0,
-          Minor_Numerical_Errors = 7,
-          Author_Assistance = T)
-```
-
-We were able to reproduce the means from Table 1. Initially, we could not reproduce the standard errors, however after the original authors informed us that they had used an R function to calculate within-subject standard errors, and we were able to reproduce the values successfully after implementing this function. 
+We were able to reproduce the means from Table 1. Initially, we could not reproduce the standard errors. The original authors informed us that they had used an R function to calculate within-subject standard errors using the Cousineau-Morey method. We were able to reproduce the values successfully after implementing this function. 
 
 Initially, we did not attempt the ANOVA as it appeared that a correction had been applied and the correction was not identified. The authors told us that this was a Greenhouse-Geisser correction, and informed us of the R function they used. When we tried to implement the ANOVA using this R function, we still encountered two major numerical errors. The authors then informed us that some of the data had actually been excluded prior to running the main analysis - this was not reported in the paper. The authors also provided code to implement this exclusion and run the ANVOA. With some minor edits, we got this to work and were able to reproduce the target outcomes.
 
+```{r}
+reportObject$Article_ID <- "gIjYG"
+reportObject$affectsConclusion <- NA
+reportObject$error_typo <- 0
+reportObject$error_specification <- 0
+reportObject$error_analysis <- 0
+reportObject$error_data <- 0
+reportObject$error_unidentified <- 0
+reportObject$Author_Assistance <- T
+reportObject$resolved_typo <- 0
+reportObject$resolved_specification <- 3
+reportObject$resolved_analysis <- 0
+reportObject$resolved_data <- 0
+reportObject$correctionSuggested <- NA
+reportObject$correctionPublished <- NA
+
+# decide on final outcome
+if(reportObject$Decision_Errors > 0 | reportObject$Major_Numerical_Errors > 0 | reportObject$Insufficient_Information_Errors > 0){
+  reportObject$finalOutcome <- "Failure"
+  if(reportObject$Author_Assistance == T){
+    reportObject$finalOutcome <- "Failure despite author assistance"
+  }
+}else{
+  reportObject$finalOutcome <- "Success"
+  if(reportObject$Author_Assistance == T){
+    reportObject$finalOutcome <- "Success with author assistance"
+  }
+}
+
+# save the report object
+filename <- paste0("reportObject_", reportObject$Article_ID,".csv")
+write_csv(reportObject, filename)
+```
+
+## Report Object
+
+```{r, echo = FALSE}
+# display report object in chunks
+kable(reportObject[2:10], align = 'l')
+kable(reportObject[11:20], align = 'l')
+kable(reportObject[21:25], align = 'l')
+kable(reportObject[26:30], align = 'l')
+kable(reportObject[31:35], align = 'l')
+kable(reportObject[36:40], align = 'l')
+kable(reportObject[41:45], align = 'l')
+kable(reportObject[46:51], align = 'l')
+kable(reportObject[52:57], align = 'l')
+```
+
+## Session information
 
 ```{r session_info, include=TRUE, echo=TRUE, results='markup'}
 devtools::session_info()
